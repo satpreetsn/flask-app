@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-config
+  namespace: user-api
+data:
+  db-config.json: |
+    {
+    "database": {
+      "pool_size": 10,
+      "max_overflow": 20,
+      "pool_timeout": 30,
+      "pool_recycle": 1800,
+      "pool_pre_ping": true
+    },
+    "logging": {
+    "level": "INFO"
+    }
+  }

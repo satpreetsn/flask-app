@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-app
+  namespace: user-api
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: user-app
+
+  template:
+    metadata:
+      labels:
+        app: user-app
+
+    spec:
+      volumes:
+        - name: db-config-volume
+          configMap:
+            name: db-config
+      containers:
+      - name: user-app
+
+        image: satpreet9071/user-api:latest
+        
+        imagePullPolicy: IfNotPresent
+
+        volumeMounts:
+        - name: db-config-volume
+          mountPath: /app/config
+          readOnly: true
+
+        ports:
+        - containerPort: 5000
+          name: http
+
+        env:
+        - name: APP_ENV
+          value: cloud
+
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: user-app-secret
+              key: DATABASE_URL
+        
+        - name: APP_CONFIG_FILE 
+          value: /app/config/db-config.json
+        
+        - name: DEBUG
+          value: "False"
+
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 5000
+
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 5000
+
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 1
+
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxUnavailable: 25%
+        maxSurge: 25%  
